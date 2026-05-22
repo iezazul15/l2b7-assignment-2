@@ -1,10 +1,12 @@
 import { pool } from "../../db";
+import type { Role } from "../../types";
 import { ApiError } from "../../utils/ApiError";
 import { validateInputs } from "../../utils/validateInput";
 import type {
   IIssue,
   IIssuePayload,
   IIssueQueryParams,
+  IIssueUpdatePayload,
 } from "./issues.interface";
 
 const create = async (payload: IIssuePayload) => {
@@ -112,8 +114,66 @@ const getSingle = async (id: string) => {
   };
 };
 
+const update = async (
+  issueId: string,
+  userId: string,
+  role: Role,
+  payload: IIssueUpdatePayload,
+) => {
+  const { title, description, type } = payload;
+  if (role === "maintainer") {
+    const dbResponse = await pool.query(
+      `
+        UPDATE issues
+        SET title = COALESCE($1, title),
+        description = COALESCE($2, description),
+        type = COALESCE($3, type)
+        WHERE id = $4
+        RETURNING *
+      `,
+      [title, description, type, issueId],
+    );
+    return dbResponse.rows[0];
+  }
+
+  if (role === "contributor") {
+    const dbResponse = await pool.query<IIssue>(
+      `
+        SELECT * FROM issues WHERE id = $1
+      `,
+      [issueId],
+    );
+
+    const issue = dbResponse.rows[0];
+
+    if (!issue) {
+      throw new ApiError(false, 500, "No issues found with this id");
+    }
+
+    const { reporter_id, status } = issue;
+
+    if (userId !== String(reporter_id) || status !== "open") {
+      throw new ApiError(false, 500, "Not allowed to update the issue");
+    }
+
+    const response = await pool.query(
+      `
+        UPDATE issues
+        SET title = COALESCE($1, title),
+        description = COALESCE($2, description),
+        type = COALESCE($3, type)
+        WHERE id = $4
+        RETURNING *
+      `,
+      [title, description, type, issueId],
+    );
+    return response.rows[0];
+  }
+};
+
 export const issueService = {
   create,
   getAll,
   getSingle,
+  update,
 };

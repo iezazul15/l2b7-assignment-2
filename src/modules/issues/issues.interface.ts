@@ -8,6 +8,11 @@ export interface IIssuePayload {
   status: IssueStatus;
 }
 
+export interface IIssueUpdatePayload extends Omit<
+  IIssuePayload,
+  "id" | "status"
+> {}
+
 export interface IIssueQueryParams {
   sort?: IssueSorting;
   type?: IssueType;
