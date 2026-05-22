@@ -1,16 +1,18 @@
 import { pool } from "../../db";
-import type { Role } from "../../types";
+import type { IssueStatus, Role } from "../../types";
 import { ApiError } from "../../utils/ApiError";
 import { validateInputs } from "../../utils/validateInput";
+import type { IUser } from "../auth/auth.interface";
 import type {
+  FormattedIssues,
   IIssue,
   IIssuePayload,
   IIssueQueryParams,
-  IIssueUpdatePayload,
 } from "./issues.interface";
 
-const create = async (payload: IIssuePayload) => {
-  const { id, title, description, type, status = "open" } = payload;
+const create = async (userId: string, payload: IIssuePayload) => {
+  const { title, description, type } = payload;
+  const status: IssueStatus = "open";
 
   validateInputs.isFieldMissing(payload, ["title", "description", "type"]);
   validateInputs.isEmptyValue(payload, ["title", "description", "type"]);
@@ -20,14 +22,10 @@ const create = async (payload: IIssuePayload) => {
         INSERT INTO issues(title, description, type, status, reporter_id)
         VALUES($1, $2, $3, $4, $5) RETURNING *
     `,
-    [title, description, type, status, id],
+    [title, description, type, status, userId],
   );
 
-  const issue = dbResponse.rows[0];
-
-  if (!issue) {
-    throw new ApiError(false, 500, "Issue creation failed");
-  }
+  const issue = dbResponse.rows[0]!;
 
   return issue;
 };
@@ -35,7 +33,7 @@ const create = async (payload: IIssuePayload) => {
 const getAll = async (params: IIssueQueryParams) => {
   const { sort = "newest", type, status } = params;
 
-  const issues = await pool.query<IIssue>(
+  const dbResponse = await pool.query<IIssue>(
     `
         SELECT *
         FROM issues
@@ -47,14 +45,12 @@ const getAll = async (params: IIssueQueryParams) => {
     [type, status],
   );
 
-  if (!issues) {
-    throw new ApiError(false, 500, "Failed to retrieve issues");
-  }
+  const issues = dbResponse.rows;
 
-  const formattedIssues = [];
+  const formattedIssues: FormattedIssues[] = [];
 
-  for (const issue of issues.rows) {
-    const reporter = await pool.query(
+  for (const issue of issues) {
+    const reporter = await pool.query<IUser>(
       `
       SELECT id, name, role
       FROM users
@@ -69,7 +65,7 @@ const getAll = async (params: IIssueQueryParams) => {
       description: issue.description,
       type: issue.type,
       status: issue.status,
-      reporter: reporter.rows[0],
+      reporter: reporter.rows[0]!,
       created_at: issue.created_at,
       updated_at: issue.updated_at,
     });
@@ -88,13 +84,13 @@ const getSingle = async (id: string) => {
     [id],
   );
 
-  const issue = dbResponse.rows[0];
-
-  if (!issue) {
-    throw new ApiError(false, 500, "Failed to retrieve issues");
+  if (dbResponse.rows.length === 0) {
+    throw new ApiError(false, 404, "Issue not found");
   }
 
-  const reporter = await pool.query(
+  const issue = dbResponse.rows[0]!;
+
+  const reporter = await pool.query<IUser>(
     `
       SELECT id, name, role
       FROM users
@@ -118,11 +114,11 @@ const update = async (
   issueId: string,
   userId: string,
   role: Role,
-  payload: IIssueUpdatePayload,
+  payload: IIssuePayload,
 ) => {
   const { title, description, type } = payload;
   if (role === "maintainer") {
-    const dbResponse = await pool.query(
+    const dbResponse = await pool.query<IIssue>(
       `
         UPDATE issues
         SET title = COALESCE($1, title),
@@ -133,7 +129,14 @@ const update = async (
       `,
       [title, description, type, issueId],
     );
-    return dbResponse.rows[0];
+
+    if (dbResponse.rows.length === 0) {
+      throw new ApiError(false, 404, "Issue not found");
+    }
+
+    const updatedIssue = dbResponse.rows[0];
+
+    return updatedIssue;
   }
 
   if (role === "contributor") {
@@ -144,19 +147,19 @@ const update = async (
       [issueId],
     );
 
-    const issue = dbResponse.rows[0];
-
-    if (!issue) {
-      throw new ApiError(false, 500, "No issues found with this id");
+    if (dbResponse.rows.length === 0) {
+      throw new ApiError(false, 404, "No issues found with this id");
     }
+
+    const issue = dbResponse.rows[0]!;
 
     const { reporter_id, status } = issue;
 
     if (userId !== String(reporter_id) || status !== "open") {
-      throw new ApiError(false, 500, "Not allowed to update the issue");
+      throw new ApiError(false, 403, "Not allowed to update the issue");
     }
 
-    const response = await pool.query(
+    const response = await pool.query<IIssue>(
       `
         UPDATE issues
         SET title = COALESCE($1, title),
@@ -167,7 +170,13 @@ const update = async (
       `,
       [title, description, type, issueId],
     );
-    return response.rows[0];
+    if (response.rows.length === 0) {
+      throw new ApiError(false, 404, "Issue not found");
+    }
+
+    const updatedIssue = response.rows[0];
+
+    return updatedIssue;
   }
 };
 

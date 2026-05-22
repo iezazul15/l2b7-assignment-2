@@ -2,12 +2,12 @@ import type { Request, Response } from "express";
 import type { AuthUser } from "../../types";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
-import type { IIssueUpdatePayload } from "./issues.interface";
+import type { IIssuePayload } from "./issues.interface";
 import { issueService } from "./issues.service";
 
 const createIssue = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.user as AuthUser;
-  const issue = await issueService.create({ id, ...req.body });
+  const { id: userId } = req.user as AuthUser;
+  const issue = await issueService.create(String(userId), req.body);
   return res
     .status(201)
     .json(new ApiResponse(true, "Issue created successfully", issue));
@@ -25,13 +25,12 @@ const getSingleIssue = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const updateIssue = asyncHandler(async (req: Request, res: Response) => {
-  const { id, role } = req?.user as AuthUser;
-  const userId = String(id);
+  const { id: userId, role } = req?.user as AuthUser;
   const issueId = req.params?.id as string;
-  const payload: IIssueUpdatePayload = req.body;
+  const payload: IIssuePayload = req.body;
   const updatedIssue = await issueService.update(
     issueId,
-    userId,
+    String(userId),
     role,
     payload,
   );

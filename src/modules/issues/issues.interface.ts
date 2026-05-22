@@ -1,17 +1,11 @@
 import type { IssueSorting, IssueStatus, IssueType } from "../../types";
+import type { IUser } from "../auth/auth.interface";
 
 export interface IIssuePayload {
-  id: number;
   title: string;
   description: string;
   type: IssueType;
-  status: IssueStatus;
 }
-
-export interface IIssueUpdatePayload extends Omit<
-  IIssuePayload,
-  "id" | "status"
-> {}
 
 export interface IIssueQueryParams {
   sort?: IssueSorting;
@@ -26,6 +20,17 @@ export interface IIssue {
   type: IssueType;
   status: IssueStatus;
   reporter_id: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface FormattedIssues {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  status: string;
+  reporter: IUser;
   created_at: Date;
   updated_at: Date;
 }
