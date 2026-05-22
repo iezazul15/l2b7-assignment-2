@@ -14,6 +14,7 @@ import {
 
 const register = async (payload: IRegisterPayload) => {
   const { name, email, password, role = "contributor" } = payload;
+
   validateInputs.isFieldMissing(payload, ["name", "email", "password"]);
   validateInputs.isEmptyValue(payload, ["name", "email", "password"]);
 
@@ -55,6 +56,12 @@ const login = async (payload: ILoginPayload) => {
 
   if (!userExists) {
     throw new ApiError(false, 400, "User with this email does not exist");
+  }
+
+  const matchedPassword = bcrypt.compare(password, userExists.password);
+
+  if (!matchedPassword) {
+    throw new ApiError(false, 401, "Email or Password does not match");
   }
 
   const { id, name, role, created_at, updated_at } = userExists;
