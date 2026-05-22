@@ -5,6 +5,7 @@ import { authService } from "./auth.service";
 
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const registeredUser = await authService.register(req.body);
+
   return res
     .status(201)
     .json(
