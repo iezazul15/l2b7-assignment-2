@@ -35,7 +35,7 @@ const register = async (payload: IRegisterPayload) => {
     [name, email, hashedPassword, role],
   );
 
-  const user = dbResponse.rows[0];
+  const user = dbResponse.rows[0]!;
 
   if (!user) {
     throw new ApiError(false, 500, "User creation failed");
