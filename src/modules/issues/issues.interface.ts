@@ -7,6 +7,10 @@ export interface IIssuePayload {
   type: IssueType;
 }
 
+export interface IIssueUpdatePayload extends IIssuePayload {
+  status?: IssueStatus;
+}
+
 export interface IIssueQueryParams {
   sort?: IssueSorting;
   type?: IssueType;

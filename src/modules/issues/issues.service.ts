@@ -8,6 +8,7 @@ import type {
   IIssue,
   IIssuePayload,
   IIssueQueryParams,
+  IIssueUpdatePayload,
 } from "./issues.interface";
 
 const create = async (userId: string, payload: IIssuePayload) => {
@@ -114,20 +115,21 @@ const update = async (
   issueId: string,
   userId: string,
   role: Role,
-  payload: IIssuePayload,
+  payload: IIssueUpdatePayload,
 ) => {
-  const { title, description, type } = payload;
+  const { title, description, type, status } = payload;
   if (role === "maintainer") {
     const dbResponse = await pool.query<IIssue>(
       `
         UPDATE issues
         SET title = COALESCE($1, title),
         description = COALESCE($2, description),
-        type = COALESCE($3, type)
-        WHERE id = $4
+        type = COALESCE($3, type),
+        status = COALESCE($4, status)
+        WHERE id = $5
         RETURNING *
       `,
-      [title, description, type, issueId],
+      [title, description, type, status, issueId],
     );
 
     if (dbResponse.rows.length === 0) {
@@ -154,6 +156,14 @@ const update = async (
     const issue = dbResponse.rows[0]!;
 
     const { reporter_id, status } = issue;
+
+    if (!status) {
+      throw new ApiError(
+        false,
+        403,
+        "Not allowed to update the status of the issue",
+      );
+    }
 
     if (userId !== String(reporter_id) || status !== "open") {
       throw new ApiError(false, 403, "Not allowed to update the issue");
