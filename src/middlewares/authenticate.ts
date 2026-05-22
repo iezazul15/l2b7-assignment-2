@@ -4,7 +4,7 @@ import { config } from "../config";
 import type { CustomJwtPayload } from "../interfaces";
 import { ApiError } from "../utils/ApiError";
 
-const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
@@ -21,4 +21,4 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-export { isAuthenticated };
+export { authenticate };
