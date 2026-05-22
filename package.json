@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "this is the backend for assignment 2",
   "main": "./dist/server.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch ./src/server.ts",
     "build": "tsup",
