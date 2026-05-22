@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
-import type { AuthUser } from "../types";
+import type { CustomJwtPayload } from "../interfaces";
 import { ApiError } from "../utils/ApiError";
 
 const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -11,7 +11,10 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
     throw new ApiError(false, 401, "Unauthorized");
   }
 
-  const payload = jwt.verify(token, config.ACCESS_TOKEN_SECRET) as AuthUser;
+  const payload = jwt.verify(
+    token,
+    config.ACCESS_TOKEN_SECRET,
+  ) as CustomJwtPayload;
 
   req.user = payload;
 
