@@ -40,9 +40,18 @@ const updateIssue = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(true, "Issue updated successfully", updatedIssue));
 });
 
+const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params?.id as string;
+  const isDeleted = await issueService.deleteSingle(id);
+  return res
+    .status(200)
+    .json(new ApiResponse(isDeleted, "Issue deleted successfully"));
+});
+
 export const issuesController = {
   createIssue,
   getAllIssues,
   getSingleIssue,
   updateIssue,
+  deleteIssue,
 };

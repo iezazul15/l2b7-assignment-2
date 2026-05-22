@@ -171,9 +171,22 @@ const update = async (
   }
 };
 
+const deleteSingle = async (id: string) => {
+  const dbResponse = await pool.query(
+    `
+      DELETE FROM issues
+      WHERE id = $1
+    `,
+    [id],
+  );
+
+  return (dbResponse.rowCount ?? 0) > 0;
+};
+
 export const issueService = {
   create,
   getAll,
   getSingle,
   update,
+  deleteSingle,
 };

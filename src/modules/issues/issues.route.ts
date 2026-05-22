@@ -23,4 +23,11 @@ router.patch(
   issuesController.updateIssue,
 );
 
+router.delete(
+  "/:id",
+  isAuthenticated,
+  authorize("maintainer"),
+  issuesController.deleteIssue,
+);
+
 export const issuesRoute = router;
