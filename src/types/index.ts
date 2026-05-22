@@ -21,6 +21,10 @@ export const IssueStatuses = ["open", "in_progress", "resolved"] as const;
 
 export type IssueStatus = (typeof IssueStatuses)[number];
 
+export const IssueSortings = ["newest", "oldest"] as const;
+
+export type IssueSorting = (typeof IssueSortings)[number];
+
 export type AsyncController = (
   req: Request,
   res: Response,

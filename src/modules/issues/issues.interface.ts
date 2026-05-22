@@ -1,4 +1,4 @@
-import type { IssueStatus, IssueType } from "../../types";
+import type { IssueSorting, IssueStatus, IssueType } from "../../types";
 
 export interface IIssuePayload {
   id: number;
@@ -6,6 +6,12 @@ export interface IIssuePayload {
   description: string;
   type: IssueType;
   status: IssueStatus;
+}
+
+export interface IIssueQueryParams {
+  sort?: IssueSorting;
+  type?: IssueType;
+  status?: IssueStatus;
 }
 
 export interface IIssue {

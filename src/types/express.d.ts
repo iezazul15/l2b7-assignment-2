@@ -9,3 +9,5 @@ declare global {
 }
 
 export {};
+
+/** TOTALLY COPY PASTED FROM CHATGPT **/
