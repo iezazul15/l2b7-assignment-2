@@ -17,7 +17,15 @@ const createIssue = asyncHandler(async (req: Request, res: Response) => {
 const getAllIssues = asyncHandler(async (req: Request, res: Response) => {
   const issues = await issueService.getAll(req.query);
 
-  return res.status(200).json(new ApiResponse(true, undefined, issues));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        issues.length === 0 ? "No issues found" : undefined,
+        issues,
+      ),
+    );
 });
 
 const getSingleIssue = asyncHandler(async (req: Request, res: Response) => {
